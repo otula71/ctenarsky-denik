@@ -3,7 +3,7 @@
 
 % --- balíčky a písmo
 \RequirePackage{fontspec}
-\setmainfont{Linux Libertine}[Numbers=OldStyle, Ligatures=TeX]
+\setmainfont{EB Garamond}[Numbers=OldStyle, Ligatures=TeX]
 \newfontfamily\hvezdyfont{DejaVu Sans}   % písmo pro hvězdičky hodnocení
 \RequirePackage[czech]{babel}
 \RequirePackage{xcolor,graphicx,tikz,pgfkeys,enumitem}
@@ -15,6 +15,7 @@
 
 % --- barvy
 \definecolor{denik}{HTML}{2E5E8C}
+\definecolor{denikLight}{HTML}{EAF1F8}
 
 % --- vzhled nadpisů a stránky
 \titleformat{\section}{\Large\bfseries\color{denik}}{}{0pt}{}
@@ -38,6 +39,16 @@
 % vynulování před každou knihou (aby se nic nepřenášelo z předchozí)
 \newcommand{\knihareset}{\pgfkeys{/kniha/.cd,
   nazev=, autor=, obalka=, precteno=, podtitul=, serie=, dil=, hodnoceni=0}}
+
+% --- díl série: číslo -> "N. díl", jakýkoli jiný text (prequel, spin-off, ...) se vypíše tak, jak je
+\ExplSyntaxOn
+\NewDocumentCommand{\formatDil}{m}{
+  \tl_set:Nx \l_tmpa_tl {#1}
+  \regex_match:nVTF { \A \d+ \Z } \l_tmpa_tl
+    { \l_tmpa_tl . \, díl }
+    { \l_tmpa_tl }
+}
+\ExplSyntaxOff
 
 % --- hvězdičky hodnocení
 \newcommand{\hvezdy}[1]{{\hvezdyfont\color{denik}%
@@ -73,7 +84,7 @@
   \begin{minipage}[c]{0.68\linewidth}
     \ifx\knihaSerie\empty\else
       {\small\addfontfeatures{Letters=SmallCaps,LetterSpace=4}\color{denik}%
-       \knihaSerie\ifx\knihaDil\empty\else\ \textperiodcentered\ \knihaDil.\,díl\fi\par}%
+       \knihaSerie\ifx\knihaDil\empty\else\ \textperiodcentered\ \formatDil{\knihaDil}\fi\par}%
       \vspace{3pt}%
     \fi
     {\Huge\bfseries\color{denik}\knihaNazev\par}%
@@ -81,7 +92,7 @@
       \vspace{2pt}{\large\itshape\knihaPodtitul\par}%
     \fi
     \vspace{6pt}
-    {\normalsize\addfontfeatures{Letters=SmallCaps,LetterSpace=6}\knihaAutor\par}\vspace{8pt}
+    {\large\addfontfeatures{Letters=SmallCaps,LetterSpace=6}\knihaAutor\par}\vspace{8pt}
     \ifx\knihaPrecteno\empty\else Přečteno: \knihaPrecteno\par\fi
     Hodnocení: \hvezdy{\knihaHodn}
   \end{minipage}

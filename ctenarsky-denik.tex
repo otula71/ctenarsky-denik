@@ -1,0 +1,17 @@
+% !TEX TS-program = lualatex
+% Hlavní soubor -- kompilace: lualatex main.tex (2x kvůli obsahu)
+\documentclass[a4paper,12pt]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{ctenar}
+\usepackage{subfiles}
+\usepackage{hyperref}
+
+\begin{document}
+\titulka[Čtenářský deník]{Jméno Příjmení}
+%\titulka[Čtenářský deník]{Jméno Příjmení}{6. třída}
+
+\tableofcontents
+
+\nactiknihy{knihy}   % načte knihy/*.tex podle abecedy
+
+\end{document}

@@ -1,0 +1,168 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ctenar}[2026/10/23 Šablona čtenářského deníku]
+
+% --- balíčky a písmo
+\RequirePackage{fontspec}
+\setmainfont{EB Garamond}[Numbers=OldStyle, Ligatures=TeX]
+\newfontfamily\hvezdyfont{DejaVu Sans}   % písmo pro hvězdičky hodnocení
+\RequirePackage[czech]{babel}
+\RequirePackage{xcolor,graphicx,tikz,pgfkeys,enumitem}
+\usetikzlibrary{calc,shapes.geometric}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{microtype}
+\RequirePackage{titlesec}
+\RequirePackage{fancyhdr}
+
+% --- barvy
+\definecolor{denik}{HTML}{2E5E8C}
+
+% --- vzhled nadpisů a stránky
+\titleformat{\section}{\Large\bfseries\color{denik}}{}{0pt}{}
+\titleformat{\subsection}{\large\bfseries\color{denik}}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{1.2em}{0.4em}
+\pagestyle{fancy}\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% --- metadata knihy (klíče pro \kniha)
+\pgfkeys{/kniha/.cd,
+  nazev/.store in=\knihaNazev,       nazev=,
+  autor/.store in=\knihaAutor,       autor=,
+  obalka/.store in=\knihaObalka,     obalka=,
+  precteno/.store in=\knihaPrecteno, precteno=,
+  hodnoceni/.store in=\knihaHodn,    hodnoceni=0,
+  podtitul/.store in=\knihaPodtitul, podtitul=,
+  serie/.store in=\knihaSerie,       serie=,
+  dil/.store in=\knihaDil,           dil=,
+}
+% vynulování před každou knihou (aby se nic nepřenášelo z předchozí)
+\newcommand{\knihareset}{\pgfkeys{/kniha/.cd,
+  nazev=, autor=, obalka=, precteno=, podtitul=, serie=, dil=, hodnoceni=0}}
+
+% --- hvězdičky hodnocení
+\newcommand{\hvezdy}[1]{{\hvezdyfont\color{denik}%
+  \foreach\i in {1,...,5}{\ifnum\i>#1 ☆\else ★\fi}}}
+
+% --- hledání obálky v obalky/ i ../obalky/, s příponou i bez ní
+\makeatletter
+\newif\ifobalkafound
+\newcommand{\najdiobalku}[1]{%
+  \obalkafoundfalse
+  \@for\@dir:={obalky/,../obalky/}\do{%
+    \@for\@ext:={,.jpg,.jpeg,.png,.pdf}\do{%
+      \ifobalkafound\else
+        \IfFileExists{\@dir#1\@ext}{\obalkafoundtrue
+          \xdef\obalkaPath{\@dir#1\@ext}}{}%
+      \fi}}}
+\makeatother
+
+% --- hlavní makro: \kniha{klíče} začne záznam
+\newcommand{\kniha}[1]{%
+  \knihareset\pgfkeys{/kniha/.cd,#1}%
+  \clearpage
+  \phantomsection\addcontentsline{toc}{section}{\knihaNazev{} -- \knihaAutor}%
+  \noindent
+  \begin{minipage}[c]{0.28\linewidth}
+    \najdiobalku{\knihaObalka}%
+    \ifobalkafound
+      \includegraphics[width=\linewidth]{\obalkaPath}%
+    \else
+      \fbox{\parbox[c][4cm][c]{0.9\linewidth}{\centering\small bez obálky}}%
+    \fi
+  \end{minipage}\hfill
+  \begin{minipage}[c]{0.68\linewidth}
+    \ifx\knihaSerie\empty\else
+      {\small\addfontfeatures{Letters=SmallCaps,LetterSpace=4}\color{denik}%
+       \knihaSerie\ifx\knihaDil\empty\else\ \textperiodcentered\ \knihaDil.\,díl\fi\par}%
+      \vspace{3pt}%
+    \fi
+    {\Huge\bfseries\color{denik}\knihaNazev\par}%
+    \ifx\knihaPodtitul\empty\else
+      \vspace{2pt}{\large\itshape\knihaPodtitul\par}%
+    \fi
+    \vspace{6pt}
+    {\normalsize\addfontfeatures{Letters=SmallCaps,LetterSpace=6}\knihaAutor\par}\vspace{8pt}
+    \ifx\knihaPrecteno\empty\else Přečteno: \knihaPrecteno\par\fi
+    Hodnocení: \hvezdy{\knihaHodn}
+  \end{minipage}
+  \par\vspace{8pt}
+  {\color{denik}\hrule height 2pt}
+  \vspace{1.2em}}
+
+% --- titulní strana: \titulka[Název]{Jméno}{horní řádek, např. školní rok}
+\newcommand{\otevrenaKniha}{%
+  \begin{tikzpicture}[scale=1.3]
+    \tikzset{strana/.style={draw=white,line width=1.4pt,fill=white!14,line join=round}}
+    \fill[black,opacity=0.12] (0,-0.2) ellipse (3.3 and 0.2);
+    \path[strana] (0,0) .. controls (-1,0.45) and (-2.2,0.45) .. (-3,0.1)
+      -- (-3,2.3) .. controls (-2.2,2.65) and (-1,2.65) .. (0,2.2) -- cycle;
+    \path[strana] (0,0) .. controls (1,0.45) and (2.2,0.45) .. (3,0.1)
+      -- (3,2.3) .. controls (2.2,2.65) and (1,2.65) .. (0,2.2) -- cycle;
+    \foreach \i in {0.55,0.85,1.15,1.45,1.75} {
+      \draw[white!55,line width=0.8pt] (-2.6,\i) to[bend left=4] (-0.45,\i+0.1);
+      \draw[white!55,line width=0.8pt] ( 0.45,\i+0.1) to[bend left=4] (2.6,\i);
+    }
+    \fill[white] (0.55,2.17) -- (0.85,2.14) -- (0.85,1.35) -- (0.7,1.5) -- (0.55,1.35) -- cycle;
+  \end{tikzpicture}}
+
+\newcommand{\titulka}[3][Čtenářský deník]{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \null
+    \begin{tikzpicture}[remember picture,overlay]
+      \coordinate (NW) at (current page.north west);
+      \coordinate (NE) at (current page.north east);
+      \coordinate (SB) at ($(current page.north east)+(0,-17)$);   % spodní hrana barevného pásu
+      % barevný pás s geometrickými kruhy
+      \fill[denik] (NW) rectangle (SB);
+      \begin{scope}
+        \clip (NW) rectangle (SB);
+        \fill[white,opacity=0.07] ($(NE)+(-2,-4)$) circle (7);
+        \fill[white,opacity=0.07] ($(NW)+(1,-16)$) circle (4.5);
+        \fill[white,opacity=0.07] ($(NW)+(14,-14)$) circle (1.6);
+      \end{scope}
+      % horní řádek (např. školní rok)
+      \node[anchor=north west,inner sep=0,text=white] at ($(NW)+(2.5,-2.3)$)
+        {\large\addfontfeatures{Letters=SmallCaps,LetterSpace=10}#3};
+      % kniha
+      \node at ($(current page.north)+(0,-9)$) {\otevrenaKniha};
+      % nadpis, akcent a jméno pod pásem
+      \node[anchor=north west,inner sep=0,text width=14.5cm,align=left,text=denik!85!black]
+        (nadpis) at ($(NW)+(2.5,-19.3)$)
+        {\fontsize{50}{54}\selectfont\bfseries #1};
+      \draw[denik,line width=3pt] ($(nadpis.south west)+(0,-0.7)$) -- ++(2.4,0);
+      \node[anchor=north west,inner sep=0,text width=14.5cm,align=left]
+        at ($(nadpis.south west)+(0,-1.5)$)
+        {\LARGE\addfontfeatures{Letters=SmallCaps,LetterSpace=8}#2};
+    \end{tikzpicture}
+  \end{titlepage}}
+
+% --- obsahová makra
+\newcommand{\podnadpis}[1]{\subsection*{#1}}
+\newenvironment{ukazka}[1][]{%
+  \begin{tcolorbox}[enhanced,breakable,colback=white,colframe=denik!40,
+    left=10pt,right=10pt,borderline west={3pt}{0pt}{denik}]
+  \itshape}{%
+  \par\end{tcolorbox}}
+\newcommand{\zdrojukazky}[1]{\par\hfill\upshape\small -- #1}
+\newcommand{\postavy}[1]{\podnadpis{Postavy}\begin{itemize}[nosep]#1\end{itemize}}
+\newcommand{\postava}[2]{\item \textbf{#1}: #2}
+\newcommand{\muj}[1]{\podnadpis{Můj názor}#1}
+\newcommand{\obrazek}[2][0.5\linewidth]{%
+  \begin{center}\includegraphics[width=#1]{#2}\end{center}}
+
+% --- automatické načtení knih podle abecedního (= datumového) pořadí souborů
+\directlua{
+function nacti_knihy(adresar)
+  local soubory = {}
+  for f in lfs.dir(adresar) do
+    if f:sub(-4) == ".tex" then table.insert(soubory, f) end
+  end
+  table.sort(soubory)
+  for _, f in ipairs(soubory) do
+    tex.sprint("\\subfile{" .. adresar .. "/" .. f:sub(1,-5) .. "}")
+  end
+end
+}
+\newcommand{\nactiknihy}[1]{\directlua{nacti_knihy("#1")}}
+\endinput

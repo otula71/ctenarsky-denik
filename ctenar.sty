@@ -153,10 +153,14 @@
 
 % --- automatické načtení knih podle abecedního (= datumového) pořadí souborů
 \directlua{
+local vynechat = { ["SABLONA.tex"] = true }
+
 function nacti_knihy(adresar)
   local soubory = {}
   for f in lfs.dir(adresar) do
-    if f:sub(-4) == ".tex" then table.insert(soubory, f) end
+    if f:sub(-4) == ".tex" and not vynechat[f] then
+      table.insert(soubory, f)
+    end
   end
   table.sort(soubory)
   for _, f in ipairs(soubory) do
